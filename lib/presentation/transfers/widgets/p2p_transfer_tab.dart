@@ -240,6 +240,61 @@ class P2pTransferTab extends StatelessWidget {
                     }),
                   ],
                 ),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: controller.amountController,
+                  builder: (context, value, _) {
+                    final enteredAmount =
+                        double.tryParse(value.text.trim()) ?? 0.0;
+                    if (enteredAmount <= 0.0) return const SizedBox.shrink();
+                    final ceil = enteredAmount.ceilToDouble();
+                    final diff = ceil > enteredAmount
+                        ? (ceil - enteredAmount)
+                        : 0.0;
+                    if (diff == 0.0) return const SizedBox.shrink();
+                    final roundupStr = diff.toStringAsFixed(2);
+                    final totalRoundedStr = ceil.toStringAsFixed(2);
+
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: colorScheme.primary.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.savings_outlined,
+                              size: 14,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Auto-Roundup: +\$$roundupStr to High-Yield Vault (Total: \$$totalRoundedStr)',
+                                style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 14),
 
                 Text(

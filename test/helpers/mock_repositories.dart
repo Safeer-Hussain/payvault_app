@@ -1,11 +1,13 @@
 import 'package:pay_vault/core/platform/biometric_bridge.dart';
 import 'package:pay_vault/data/models/ai_message_model.dart';
 import 'package:pay_vault/domain/entities/contact_entity.dart';
+import 'package:pay_vault/domain/entities/savings_vault_entity.dart';
 import 'package:pay_vault/domain/entities/transaction_entity.dart';
 import 'package:pay_vault/domain/entities/virtual_card_entity.dart';
 import 'package:pay_vault/domain/entities/wallet_entity.dart';
 import 'package:pay_vault/domain/repositories/ai_advisor_repository.dart';
 import 'package:pay_vault/domain/repositories/card_repository.dart';
+import 'package:pay_vault/domain/repositories/savings_vault_repository.dart';
 import 'package:pay_vault/domain/repositories/transfer_repository.dart';
 import 'package:pay_vault/domain/repositories/vault_repository.dart';
 
@@ -325,6 +327,72 @@ class FakeBiometricBridge extends BiometricBridge {
       timestamp: 1700000000,
       biometricType: 'FakeEnclaveBiometric',
       signature: 'TEST-SIGNATURE',
+    );
+  }
+}
+
+class FakeSavingsVaultRepository implements SavingsVaultRepository {
+  SavingsVaultEntity mockVault = const SavingsVaultEntity(
+    id: 'sv_spare_change',
+    name: 'High-Yield Spare Change Vault',
+    currency: 'USD',
+    balance: 348.65,
+    apy: 4.5,
+    isRoundupEnabled: true,
+    roundupMultiplier: 1,
+    totalRoundupsCount: 24,
+    totalSaved: 348.65,
+    lastRoundupTimestamp: 1700000000,
+  );
+
+  @override
+  Future<SavingsVaultEntity> getSavingsVault() async => mockVault;
+
+  @override
+  Future<SavingsVaultEntity> updateRoundupSettings({
+    required bool isEnabled,
+    required int multiplier,
+  }) async {
+    mockVault = mockVault.copyWith(
+      isRoundupEnabled: isEnabled,
+      roundupMultiplier: multiplier,
+    );
+    return mockVault;
+  }
+
+  @override
+  Future<void> executeRoundupTransfer({
+    required String sourceCurrency,
+    required double roundupAmount,
+    required String originalTxId,
+  }) async {
+    mockVault = mockVault.copyWith(
+      balance: mockVault.balance + roundupAmount,
+      totalSaved: mockVault.totalSaved + roundupAmount,
+      totalRoundupsCount: mockVault.totalRoundupsCount + 1,
+      lastRoundupTimestamp: DateTime.now().millisecondsSinceEpoch,
+    );
+  }
+
+  @override
+  Future<void> withdrawToWallet({
+    required double amount,
+    required String targetCurrency,
+  }) async {
+    if (mockVault.balance < amount) {
+      throw Exception('Insufficient funds in savings vault');
+    }
+    mockVault = mockVault.copyWith(balance: mockVault.balance - amount);
+  }
+
+  @override
+  Future<void> depositToSavings({
+    required double amount,
+    required String sourceCurrency,
+  }) async {
+    mockVault = mockVault.copyWith(
+      balance: mockVault.balance + amount,
+      totalSaved: mockVault.totalSaved + amount,
     );
   }
 }

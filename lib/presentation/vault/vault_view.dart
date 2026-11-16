@@ -5,6 +5,7 @@ import 'vault_controller.dart';
 import 'widgets/multi_currency_carousel.dart';
 import 'widgets/quick_actions_hub.dart';
 import 'widgets/cash_flow_chart.dart';
+import 'widgets/spare_change_vault_card.dart';
 import '../adaptive_scaffold.dart';
 
 class VaultView extends StatelessWidget {
@@ -61,6 +62,8 @@ class VaultView extends StatelessWidget {
           const SizedBox(height: 16),
           const QuickActionsHub(),
           const SizedBox(height: 16),
+          const SpareChangeVaultCard(),
+          const SizedBox(height: 16),
           const CashFlowChart(),
           const SizedBox(height: 20),
           _buildRecentTransactionsHeader(context, colorScheme),
@@ -93,6 +96,8 @@ class VaultView extends StatelessWidget {
                 MultiCurrencyCarousel(),
                 SizedBox(height: 12),
                 QuickActionsHub(),
+                SizedBox(height: 12),
+                SpareChangeVaultCard(),
                 SizedBox(height: 80),
               ],
             ),

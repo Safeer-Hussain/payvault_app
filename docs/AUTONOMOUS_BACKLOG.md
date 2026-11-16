@@ -6,7 +6,7 @@ This backlog defines 25 production engineering sprints for PayVault. Each sprint
 
 ### Sprint Roadmap
 
-- [ ] **Sprint 1: Auto-Roundup Spare Change Savings Vault**
+- [x] **Sprint 1: Auto-Roundup Spare Change Savings Vault**
   - Automate spare change roundup on debit transactions to the nearest dollar/euro.
   - Transfer difference into dedicated high-yield spare change vault.
   - Add test suite verifying ledger calculations and balance adjustments.

@@ -12,6 +12,7 @@ import 'package:pay_vault/presentation/ai_advisor/ai_advisor_controller.dart';
 import 'package:pay_vault/presentation/analytics_ledger/ledger_controller.dart';
 import 'package:pay_vault/presentation/settings_debug/debug_controller.dart';
 import 'package:pay_vault/presentation/vault/widgets/cash_flow_chart.dart';
+import 'package:pay_vault/presentation/vault/widgets/spare_change_vault_card.dart';
 import 'package:pay_vault/presentation/analytics_ledger/widgets/weekly_burn_chart.dart';
 
 import '../helpers/mock_repositories.dart';
@@ -23,13 +24,18 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
 
     final fakeVault = FakeVaultRepository();
+    final fakeSavings = FakeSavingsVaultRepository();
     final fakeCard = FakeCardRepository();
     final fakeTransfer = FakeTransferRepository();
     final fakeAi = FakeAiAdvisorRepository();
     final fakeBiometric = FakeBiometricBridge(prefs);
 
     Get.put(ThemeController(prefs), permanent: true);
-    Get.put(VaultController(fakeVault), permanent: true);
+    final vaultController = Get.put(
+      VaultController(fakeVault, fakeSavings),
+      permanent: true,
+    );
+    await vaultController.loadVaultData();
     Get.put(CardStudioController(fakeCard, fakeBiometric), permanent: true);
     Get.put(
       TransferController(fakeTransfer, fakeVault, fakeBiometric),
@@ -163,6 +169,33 @@ void main() {
         expect(themeController.isDarkMode, isFalse);
 
         await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'SpareChangeVaultCard renders balance, APY chip, and allows toggling auto-roundup',
+      (tester) async {
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.darkTheme,
+            home: const AdaptiveScaffold(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('High-Yield Spare Change Vault'), findsOneWidget);
+        expect(find.text('4.5% APY'), findsOneWidget);
+        expect(find.text('\$348.65'), findsOneWidget);
+
+        final autoRoundupSwitch = find.descendant(
+          of: find.byType(SpareChangeVaultCard),
+          matching: find.byType(Switch),
+        );
+        expect(autoRoundupSwitch, findsOneWidget);
+        await tester.tap(autoRoundupSwitch);
+        await tester.pumpAndSettle();
+
         expect(tester.takeException(), isNull);
       },
     );

@@ -100,6 +100,21 @@ class AppDatabase {
         category TEXT NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS savings_vaults (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        currency TEXT NOT NULL,
+        balance REAL NOT NULL,
+        apy REAL NOT NULL,
+        isRoundupEnabled INTEGER NOT NULL,
+        roundupMultiplier INTEGER NOT NULL,
+        totalRoundupsCount INTEGER NOT NULL,
+        totalSaved REAL NOT NULL,
+        lastRoundupTimestamp INTEGER NOT NULL
+      )
+    ''');
   }
 
   static Future<void> seedInitialData(Database db) async {
@@ -396,6 +411,64 @@ class AppDatabase {
       welcomeAi,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+
+    // 6. Savings Vault (Spare Change)
+    final savingsVault = {
+      'id': 'sv_spare_change',
+      'name': 'High-Yield Spare Change Vault',
+      'currency': 'USD',
+      'balance': 348.65,
+      'apy': 4.5,
+      'isRoundupEnabled': 1,
+      'roundupMultiplier': 1,
+      'totalRoundupsCount': 24,
+      'totalSaved': 348.65,
+      'lastRoundupTimestamp': now.millisecondsSinceEpoch,
+    };
+    await db.insert(
+      'savings_vaults',
+      savingsVault,
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+
+  static Future<void> ensureSavingsVaultInitialized(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS savings_vaults (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        currency TEXT NOT NULL,
+        balance REAL NOT NULL,
+        apy REAL NOT NULL,
+        isRoundupEnabled INTEGER NOT NULL,
+        roundupMultiplier INTEGER NOT NULL,
+        totalRoundupsCount INTEGER NOT NULL,
+        totalSaved REAL NOT NULL,
+        lastRoundupTimestamp INTEGER NOT NULL
+      )
+    ''');
+
+    final existing = await db.query(
+      'savings_vaults',
+      where: 'id = ?',
+      whereArgs: ['sv_spare_change'],
+      limit: 1,
+    );
+
+    if (existing.isEmpty) {
+      await db.insert('savings_vaults', {
+        'id': 'sv_spare_change',
+        'name': 'High-Yield Spare Change Vault',
+        'currency': 'USD',
+        'balance': 348.65,
+        'apy': 4.5,
+        'isRoundupEnabled': 1,
+        'roundupMultiplier': 1,
+        'totalRoundupsCount': 24,
+        'totalSaved': 348.65,
+        'lastRoundupTimestamp': DateTime.now().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
   }
 
   static Future<void> resetDatabase() async {
@@ -405,6 +478,7 @@ class AppDatabase {
     await db.execute('DELETE FROM transactions');
     await db.execute('DELETE FROM contacts');
     await db.execute('DELETE FROM ai_messages');
+    await db.execute('DELETE FROM savings_vaults');
     await seedInitialData(db);
   }
 }
