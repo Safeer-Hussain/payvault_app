@@ -10,11 +10,13 @@ import '../../data/repositories/card_repository_impl.dart';
 import '../../data/repositories/transfer_repository_impl.dart';
 import '../../data/repositories/ai_advisor_repository_impl.dart';
 import '../../data/repositories/savings_vault_repository_impl.dart';
+import '../../data/repositories/statement_repository_impl.dart';
 import '../../domain/repositories/vault_repository.dart';
 import '../../domain/repositories/card_repository.dart';
 import '../../domain/repositories/transfer_repository.dart';
 import '../../domain/repositories/ai_advisor_repository.dart';
 import '../../domain/repositories/savings_vault_repository.dart';
+import '../../domain/repositories/statement_repository.dart';
 import '../../presentation/vault/vault_controller.dart';
 import '../../presentation/cards/card_studio_controller.dart';
 import '../../presentation/transfers/transfer_controller.dart';
@@ -42,12 +44,14 @@ Future<void> configureDependencies() async {
   final transferRepo = TransferRepositoryImpl();
   final aiRepo = AiAdvisorRepositoryImpl();
   final savingsVaultRepo = SavingsVaultRepositoryImpl();
+  final statementRepo = StatementRepositoryImpl();
 
   getIt.registerSingleton<VaultRepository>(vaultRepo);
   getIt.registerSingleton<CardRepository>(cardRepo);
   getIt.registerSingleton<TransferRepository>(transferRepo);
   getIt.registerSingleton<AiAdvisorRepository>(aiRepo);
   getIt.registerSingleton<SavingsVaultRepository>(savingsVaultRepo);
+  getIt.registerSingleton<StatementRepository>(statementRepo);
 
   // 4. Controllers
   final themeController = Get.put(ThemeController(prefs), permanent: true);
@@ -78,7 +82,7 @@ Future<void> configureDependencies() async {
   getIt.registerSingleton<AiAdvisorController>(aiController);
 
   final ledgerController = Get.put(
-    LedgerController(transferRepo),
+    LedgerController(transferRepo, statementRepo),
     permanent: true,
   );
   getIt.registerSingleton<LedgerController>(ledgerController);

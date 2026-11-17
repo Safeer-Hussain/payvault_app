@@ -11,7 +11,7 @@ This backlog defines 25 production engineering sprints for PayVault. Each sprint
   - Transfer difference into dedicated high-yield spare change vault.
   - Add test suite verifying ledger calculations and balance adjustments.
 
-- [ ] **Sprint 2: PDF Statement Exporter with Digital Cryptographic Seal**
+- [x] **Sprint 2: PDF Statement Exporter with Digital Cryptographic Seal**
   - Generate enterprise monthly account statements with QR verification watermark.
   - Implement digital signature stamp verifying transaction integrity.
   - Include automated export test and file format validator.

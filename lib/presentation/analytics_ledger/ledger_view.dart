@@ -5,6 +5,7 @@ import 'ledger_controller.dart';
 import 'widgets/spending_doughnut_chart.dart';
 import 'widgets/weekly_burn_chart.dart';
 import 'widgets/transaction_detail_sheet.dart';
+import 'widgets/statement_export_sheet.dart';
 
 class LedgerView extends StatelessWidget {
   const LedgerView({super.key});
@@ -40,7 +41,7 @@ class LedgerView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildSearchAndFilters(colorScheme, controller),
+          _buildSearchAndFilters(context, colorScheme, controller),
           const SizedBox(height: 14),
           Obx(() {
             final _ = controller.transactions.length;
@@ -119,7 +120,7 @@ class LedgerView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildSearchAndFilters(colorScheme, controller),
+                _buildSearchAndFilters(context, colorScheme, controller),
                 const SizedBox(height: 12),
                 _buildTransactionList(context, colorScheme, controller),
                 const SizedBox(height: 40),
@@ -132,12 +133,48 @@ class LedgerView extends StatelessWidget {
   }
 
   Widget _buildSearchAndFilters(
+    BuildContext context,
     ColorScheme colorScheme,
     LedgerController controller,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                'LEDGER AUDIT & ANALYTICS',
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            TextButton.icon(
+              icon: const Icon(Icons.picture_as_pdf_outlined, size: 14),
+              label: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Export Statement',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: colorScheme.primary,
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              ),
+              onPressed: () => _showExportSheet(context, controller),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         // Search Bar
         TextField(
           controller: controller.searchController,
@@ -351,5 +388,17 @@ class LedgerView extends StatelessWidget {
         },
       );
     });
+  }
+
+  void _showExportSheet(BuildContext context, LedgerController controller) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatementExportSheet(controller: controller),
+    );
   }
 }

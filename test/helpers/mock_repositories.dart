@@ -1,13 +1,18 @@
+import 'package:intl/intl.dart';
+import 'package:pay_vault/core/crypto/statement_seal_service.dart';
 import 'package:pay_vault/core/platform/biometric_bridge.dart';
+import 'package:pay_vault/core/utils/pdf_document_generator.dart';
 import 'package:pay_vault/data/models/ai_message_model.dart';
 import 'package:pay_vault/domain/entities/contact_entity.dart';
 import 'package:pay_vault/domain/entities/savings_vault_entity.dart';
+import 'package:pay_vault/domain/entities/statement_export_entity.dart';
 import 'package:pay_vault/domain/entities/transaction_entity.dart';
 import 'package:pay_vault/domain/entities/virtual_card_entity.dart';
 import 'package:pay_vault/domain/entities/wallet_entity.dart';
 import 'package:pay_vault/domain/repositories/ai_advisor_repository.dart';
 import 'package:pay_vault/domain/repositories/card_repository.dart';
 import 'package:pay_vault/domain/repositories/savings_vault_repository.dart';
+import 'package:pay_vault/domain/repositories/statement_repository.dart';
 import 'package:pay_vault/domain/repositories/transfer_repository.dart';
 import 'package:pay_vault/domain/repositories/vault_repository.dart';
 
@@ -394,5 +399,117 @@ class FakeSavingsVaultRepository implements SavingsVaultRepository {
       balance: mockVault.balance + amount,
       totalSaved: mockVault.totalSaved + amount,
     );
+  }
+}
+
+class FakeStatementRepository implements StatementRepository {
+  List<StatementExportEntity> generatedStatements = [];
+
+  @override
+  Future<StatementExportEntity> generateStatement({
+    required DateTime periodMonth,
+    String currency = 'USD',
+  }) async {
+    final now = DateTime.now();
+    final statementId =
+        'PV-STMT-${periodMonth.year}${periodMonth.month.toString().padLeft(2, '0')}-TEST1234';
+    final period = DateFormat('MMMM yyyy').format(periodMonth);
+
+    final mockTxs = [
+      TransactionEntity(
+        id: 'tx_test_01',
+        title: 'Executive Wire Settlement',
+        subtitle: 'Consulting Retainer',
+        amount: 5000.0,
+        currency: currency,
+        timestamp: now.millisecondsSinceEpoch,
+        category: 'Salary',
+        status: 'Completed',
+        type: 'credit',
+        referenceId: 'REF-TEST-01',
+      ),
+      TransactionEntity(
+        id: 'tx_test_02',
+        title: 'Cloud Infrastructure Ops',
+        subtitle: 'Monthly compute clusters',
+        amount: 850.0,
+        currency: currency,
+        timestamp: now.millisecondsSinceEpoch,
+        category: 'Tech/Cloud',
+        status: 'Completed',
+        type: 'debit',
+        referenceId: 'REF-TEST-02',
+      ),
+    ];
+
+    const openingBalance = 10000.0;
+    const totalCredits = 5000.0;
+    const totalDebits = 850.0;
+    const closingBalance = openingBalance + totalCredits - totalDebits;
+
+    final payloadHash = StatementSealService.generatePayloadHash(
+      statementId: statementId,
+      accountHolder: 'Safeer Hussain',
+      accountNumber: 'GB29NWBK60161331926819',
+      period: period,
+      openingBalance: openingBalance,
+      closingBalance: closingBalance,
+      totalDebits: totalDebits,
+      totalCredits: totalCredits,
+      transactionCount: mockTxs.length,
+      generatedAtTimestamp: now.millisecondsSinceEpoch,
+    );
+
+    final digitalSignature = StatementSealService.generateDigitalSignature(
+      payloadHash: payloadHash,
+    );
+
+    final verificationQrPayload = StatementSealService.generateVerificationUri(
+      statementId: statementId,
+      digitalSignature: digitalSignature,
+      payloadHash: payloadHash,
+      generatedAtTimestamp: now.millisecondsSinceEpoch,
+    );
+
+    var statement = StatementExportEntity(
+      id: statementId,
+      period: period,
+      generatedAt: now,
+      accountHolder: 'Safeer Hussain',
+      accountNumber: 'GB29NWBK60161331926819',
+      currency: currency,
+      openingBalance: openingBalance,
+      closingBalance: closingBalance,
+      totalDebits: totalDebits,
+      totalCredits: totalCredits,
+      transactions: mockTxs,
+      payloadHash: payloadHash,
+      digitalSignature: digitalSignature,
+      verificationQrPayload: verificationQrPayload,
+      sealWatermark: 'PAYVAULT HARDWARE KEYSTORE CRYPTOGRAPHICALLY CERTIFIED',
+      pdfBytes: const [],
+    );
+
+    final pdfBytes = PdfDocumentGenerator.generateStatementPdf(statement);
+    statement = statement.copyWith(pdfBytes: pdfBytes);
+    generatedStatements.add(statement);
+    return statement;
+  }
+
+  @override
+  Future<bool> verifyStatementIntegrity({
+    required String statementId,
+    required String digitalSignature,
+    required String payloadHash,
+  }) async {
+    return StatementSealService.verifySignature(
+      payloadHash: payloadHash,
+      digitalSignature: digitalSignature,
+    );
+  }
+
+  @override
+  Future<String> saveStatementPdf(StatementExportEntity statement) async {
+    return '/mock/storage/documents/${statement.id}.pdf';
   }
 }

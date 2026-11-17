@@ -29,6 +29,7 @@ void main() {
     final fakeTransfer = FakeTransferRepository();
     final fakeAi = FakeAiAdvisorRepository();
     final fakeBiometric = FakeBiometricBridge(prefs);
+    final fakeStatement = FakeStatementRepository();
 
     Get.put(ThemeController(prefs), permanent: true);
     final vaultController = Get.put(
@@ -45,7 +46,7 @@ void main() {
       AiAdvisorController(fakeAi, fakeVault, fakeTransfer),
       permanent: true,
     );
-    Get.put(LedgerController(fakeTransfer), permanent: true);
+    Get.put(LedgerController(fakeTransfer, fakeStatement), permanent: true);
     Get.put(DebugController(prefs, fakeVault), permanent: true);
     Get.put(fakeBiometric, permanent: true);
   });
@@ -195,6 +196,43 @@ void main() {
         expect(autoRoundupSwitch, findsOneWidget);
         await tester.tap(autoRoundupSwitch);
         await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'Opens Statement Export Sheet and launches verification certificate',
+      (tester) async {
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.darkTheme,
+            home: const AdaptiveScaffold(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Switch to Ledger tab (index 4)
+        await tester.tap(find.byIcon(Icons.receipt_long_outlined));
+        await tester.pumpAndSettle();
+
+        // Find and tap 'Export Statement'
+        final exportBtn = find.text('Export Statement');
+        expect(exportBtn, findsOneWidget);
+        await tester.tap(exportBtn);
+        await tester.pumpAndSettle();
+
+        // Verify StatementExportSheet is presented
+        expect(find.text('Export Cryptographic Statement'), findsOneWidget);
+        expect(find.text('Generate & Export Sealed PDF'), findsOneWidget);
+
+        // Tap Generate & Export Sealed PDF
+        await tester.tap(find.text('Generate & Export Sealed PDF'));
+        await tester.pumpAndSettle();
+
+        // Verify StatementVerificationDialog opened with QR watermark & Seal
+        expect(find.text('Cryptographic Seal Certificate'), findsOneWidget);
+        expect(find.text('Cryptographic Seal Validated'), findsOneWidget);
 
         expect(tester.takeException(), isNull);
       },
