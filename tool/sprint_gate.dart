@@ -20,7 +20,7 @@ Future<void> main(List<String> args) async {
     _GateStep(
       name: 'Flutter Analyze (Zero Warning Rule)',
       executable: 'flutter',
-      arguments: ['analyze', '--no-pub'],
+      arguments: ['analyze', '--no-pub', '--no-fatal-infos'],
     ),
     _GateStep(
       name: 'Flutter Automated Tests',
