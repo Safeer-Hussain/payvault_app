@@ -15,7 +15,13 @@ Future<void> main(List<String> args) async {
     _GateStep(
       name: 'Dart Code Formatting (lib, test)',
       executable: 'dart',
-      arguments: ['format', '--output=none', '--set-exit-if-changed', 'lib', 'test'],
+      arguments: [
+        'format',
+        '--output=none',
+        '--set-exit-if-changed',
+        'lib',
+        'test',
+      ],
     ),
     _GateStep(
       name: 'Flutter Analyze (Zero Warning Rule)',
@@ -50,7 +56,9 @@ Future<void> main(List<String> args) async {
       if (result.stderr.toString().trim().isNotEmpty) {
         print(result.stderr.toString().trim());
       }
-      print('\nSprint Gate Verification FAILED at Phase ${i + 1}: ${step.name}');
+      print(
+        '\nSprint Gate Verification FAILED at Phase ${i + 1}: ${step.name}',
+      );
       exit(result.exitCode);
     }
 

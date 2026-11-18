@@ -1,5 +1,6 @@
 // ignore_for_file: depend_on_referenced_packages, avoid_print
 import 'dart:io';
+
 import 'package:image/image.dart' as img;
 
 void main() {
@@ -122,7 +123,13 @@ void main() {
         final dx = x - 48;
         final dy = y - 48;
         if (dx * dx + dy * dy <= 38 * 38) {
-          imgAvatar.setPixelRgb(x, y, col.r.toInt(), col.g.toInt(), col.b.toInt());
+          imgAvatar.setPixelRgb(
+            x,
+            y,
+            col.r.toInt(),
+            col.g.toInt(),
+            col.b.toInt(),
+          );
         }
       }
     }
