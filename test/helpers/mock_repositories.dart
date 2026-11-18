@@ -13,8 +13,12 @@ import 'package:pay_vault/domain/repositories/ai_advisor_repository.dart';
 import 'package:pay_vault/domain/repositories/card_repository.dart';
 import 'package:pay_vault/domain/repositories/savings_vault_repository.dart';
 import 'package:pay_vault/domain/repositories/statement_repository.dart';
+import 'package:pay_vault/domain/repositories/subscription_repository.dart';
 import 'package:pay_vault/domain/repositories/transfer_repository.dart';
 import 'package:pay_vault/domain/repositories/vault_repository.dart';
+import 'package:pay_vault/domain/entities/subscription_entity.dart';
+import 'package:pay_vault/core/utils/recurring_scan_service.dart';
+import 'package:pay_vault/core/utils/subscription_cancellation_notice_generator.dart';
 
 class FakeVaultRepository implements VaultRepository {
   List<WalletEntity> mockWallets = [
@@ -511,5 +515,154 @@ class FakeStatementRepository implements StatementRepository {
   @override
   Future<String> saveStatementPdf(StatementExportEntity statement) async {
     return '/mock/storage/documents/${statement.id}.pdf';
+  }
+}
+
+class FakeSubscriptionRepository implements SubscriptionRepository {
+  List<SubscriptionEntity> mockSubscriptions = [
+    SubscriptionEntity(
+      id: 'sub_aws',
+      merchantName: 'Amazon Web Services',
+      category: 'Cloud Infrastructure',
+      amount: 428.50,
+      currency: 'USD',
+      billingCycle: BillingCycle.monthly,
+      status: SubscriptionStatus.active,
+      paymentMethod: 'Executive Titanium Vault (••8812)',
+      nextBillingDate: DateTime.now().add(const Duration(days: 14)),
+      detectedFrequencyDays: 30,
+      vendorEmail: 'billing@aws.amazon.com',
+      accountReference: 'PV-AWS-9021',
+    ),
+    SubscriptionEntity(
+      id: 'sub_bloomberg',
+      merchantName: 'Bloomberg Professional',
+      category: 'Financial Intelligence',
+      amount: 2400.00,
+      currency: 'USD',
+      billingCycle: BillingCycle.monthly,
+      status: SubscriptionStatus.active,
+      paymentMethod: 'Executive Titanium Vault (••8812)',
+      nextBillingDate: DateTime.now().add(const Duration(days: 8)),
+      detectedFrequencyDays: 30,
+      vendorEmail: 'billing@bloomberg.com',
+      accountReference: 'PV-BLM-1102',
+    ),
+    SubscriptionEntity(
+      id: 'sub_github',
+      merchantName: 'GitHub Enterprise',
+      category: 'Developer Tools',
+      amount: 21.00,
+      currency: 'USD',
+      billingCycle: BillingCycle.monthly,
+      status: SubscriptionStatus.active,
+      paymentMethod: 'Cyber Cloud Ops (••1254)',
+      nextBillingDate: DateTime.now().add(const Duration(days: 22)),
+      detectedFrequencyDays: 30,
+      vendorEmail: 'support@github.com',
+      accountReference: 'PV-GH-4410',
+    ),
+    SubscriptionEntity(
+      id: 'sub_openai',
+      merchantName: 'OpenAI ChatGPT Plus',
+      category: 'AI Services',
+      amount: 20.00,
+      currency: 'USD',
+      billingCycle: BillingCycle.monthly,
+      status: SubscriptionStatus.frozen,
+      paymentMethod: 'Cyber Cloud Ops (••1254)',
+      nextBillingDate: DateTime.now().add(const Duration(days: 25)),
+      detectedFrequencyDays: 30,
+      vendorEmail: 'ar@openai.com',
+      accountReference: 'PV-OAI-3019',
+    ),
+  ];
+
+  @override
+  Future<List<SubscriptionEntity>> getSubscriptions() async {
+    return List.from(mockSubscriptions);
+  }
+
+  @override
+  Future<List<SubscriptionEntity>> scanRecurringCharges({
+    List<TransactionEntity>? transactions,
+  }) async {
+    final discovered = RecurringScanService.scanTransactions(
+      transactions ?? [],
+      existingSubscriptions: mockSubscriptions,
+    );
+    mockSubscriptions.addAll(discovered);
+    return List.from(mockSubscriptions);
+  }
+
+  @override
+  Future<SubscriptionEntity> freezeSubscription(String id) async {
+    final idx = mockSubscriptions.indexWhere((s) => s.id == id);
+    if (idx == -1) throw Exception('Subscription not found: $id');
+    final updated = mockSubscriptions[idx].copyWith(
+      status: SubscriptionStatus.frozen,
+    );
+    mockSubscriptions[idx] = updated;
+    return updated;
+  }
+
+  @override
+  Future<SubscriptionEntity> unfreezeSubscription(String id) async {
+    final idx = mockSubscriptions.indexWhere((s) => s.id == id);
+    if (idx == -1) throw Exception('Subscription not found: $id');
+    final updated = mockSubscriptions[idx].copyWith(
+      status: SubscriptionStatus.active,
+    );
+    mockSubscriptions[idx] = updated;
+    return updated;
+  }
+
+  @override
+  Future<SubscriptionEntity> cancelSubscription(
+    String id, {
+    String? reason,
+    String? customNotice,
+  }) async {
+    final idx = mockSubscriptions.indexWhere((s) => s.id == id);
+    if (idx == -1) throw Exception('Subscription not found: $id');
+    final current = mockSubscriptions[idx];
+    final notice =
+        customNotice ??
+        generateCancellationNotice(
+          current,
+          userName: 'Safeer Hussain',
+          userEmail: 'bcsm-s20-033@superior.edu.pk',
+          reason: reason,
+        );
+    final updated = current.copyWith(
+      status: SubscriptionStatus.cancelled,
+      cancellationNotice: notice,
+      cancellationReason: reason,
+    );
+    mockSubscriptions[idx] = updated;
+    return updated;
+  }
+
+  @override
+  Future<SubscriptionEntity> addSubscription(
+    SubscriptionEntity subscription,
+  ) async {
+    mockSubscriptions.add(subscription);
+    return subscription;
+  }
+
+  @override
+  String generateCancellationNotice(
+    SubscriptionEntity subscription, {
+    required String userName,
+    required String userEmail,
+    String? reason,
+  }) {
+    return SubscriptionCancellationNoticeGenerator.generateNotice(
+      subscription: subscription,
+      userName: userName,
+      userEmail: userEmail,
+      reason: reason,
+    );
   }
 }

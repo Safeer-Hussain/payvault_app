@@ -6,6 +6,7 @@ import 'widgets/spending_doughnut_chart.dart';
 import 'widgets/weekly_burn_chart.dart';
 import 'widgets/transaction_detail_sheet.dart';
 import 'widgets/statement_export_sheet.dart';
+import 'widgets/subscription_summary_card.dart';
 
 class LedgerView extends StatelessWidget {
   const LedgerView({super.key});
@@ -42,6 +43,8 @@ class LedgerView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildSearchAndFilters(context, colorScheme, controller),
+          const SizedBox(height: 12),
+          const SubscriptionSummaryCard(),
           const SizedBox(height: 14),
           Obx(() {
             final _ = controller.transactions.length;
@@ -121,6 +124,8 @@ class LedgerView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildSearchAndFilters(context, colorScheme, controller),
+                const SizedBox(height: 12),
+                const SubscriptionSummaryCard(),
                 const SizedBox(height: 12),
                 _buildTransactionList(context, colorScheme, controller),
                 const SizedBox(height: 40),

@@ -16,7 +16,7 @@ This backlog defines 25 production engineering sprints for PayVault. Each sprint
   - Implement digital signature stamp verifying transaction integrity.
   - Include automated export test and file format validator.
 
-- [ ] **Sprint 3: Recurring Subscription Cancellation Bot**
+- [x] **Sprint 3: Recurring Subscription Cancellation Bot**
   - Implement automated scan detecting recurring monthly merchant charges.
   - Add one-tap subscription freeze and vendor cancellation notice generator.
   - Provide unit tests validating recurring billing detection logic.

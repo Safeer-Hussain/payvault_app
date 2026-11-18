@@ -10,6 +10,7 @@ import 'package:pay_vault/presentation/cards/card_studio_controller.dart';
 import 'package:pay_vault/presentation/transfers/transfer_controller.dart';
 import 'package:pay_vault/presentation/ai_advisor/ai_advisor_controller.dart';
 import 'package:pay_vault/presentation/analytics_ledger/ledger_controller.dart';
+import 'package:pay_vault/presentation/analytics_ledger/subscription_controller.dart';
 import 'package:pay_vault/presentation/settings_debug/debug_controller.dart';
 import 'package:pay_vault/presentation/vault/widgets/cash_flow_chart.dart';
 import 'package:pay_vault/presentation/vault/widgets/spare_change_vault_card.dart';
@@ -47,6 +48,8 @@ void main() {
       permanent: true,
     );
     Get.put(LedgerController(fakeTransfer, fakeStatement), permanent: true);
+    final fakeSubscription = FakeSubscriptionRepository();
+    Get.put(SubscriptionController(fakeSubscription), permanent: true);
     Get.put(DebugController(prefs, fakeVault), permanent: true);
     Get.put(fakeBiometric, permanent: true);
   });
@@ -233,6 +236,67 @@ void main() {
         // Verify StatementVerificationDialog opened with QR watermark & Seal
         expect(find.text('Cryptographic Seal Certificate'), findsOneWidget);
         expect(find.text('Cryptographic Seal Validated'), findsOneWidget);
+
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'Opens Subscription Bot Sheet and toggles freeze status and cancellation dialog',
+      (tester) async {
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.darkTheme,
+            home: const AdaptiveScaffold(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Switch to Ledger tab (index 4)
+        await tester.tap(find.byIcon(Icons.receipt_long_outlined));
+        await tester.pumpAndSettle();
+
+        // Find Subscription Summary Card
+        expect(find.text('AI SUBSCRIPTION CANCELLATION BOT'), findsOneWidget);
+
+        // Tap 'Open Bot Terminal'
+        final openBotBtn = find.text('Open Bot Terminal');
+        expect(openBotBtn, findsOneWidget);
+        await tester.tap(openBotBtn);
+        await tester.pumpAndSettle();
+
+        // Verify SubscriptionBotSheet opens
+        expect(find.text('Subscription Cancellation Bot'), findsOneWidget);
+        expect(find.text('Amazon Web Services'), findsOneWidget);
+        expect(find.text('Bloomberg Professional'), findsOneWidget);
+
+        // Find 'Hold / Freeze' for AWS and tap it
+        final freezeBtn = find
+            .widgetWithText(OutlinedButton, 'Hold / Freeze')
+            .first;
+        await tester.tap(freezeBtn);
+        await tester.pumpAndSettle();
+
+        // Verify status changes to 'Resume Mandate'
+        expect(
+          find.widgetWithText(OutlinedButton, 'Resume Mandate'),
+          findsWidgets,
+        );
+
+        // Tap 'Cancel with Bot' for Bloomberg
+        final cancelBtn = find
+            .widgetWithText(ElevatedButton, 'Cancel with Bot')
+            .first;
+        await tester.tap(cancelBtn);
+        await tester.pumpAndSettle();
+
+        // Verify CancellationNoticeDialog is presented
+        expect(find.text('AI VENDOR CANCELLATION BOT'), findsOneWidget);
+        expect(find.text('Transmit & Cancel Mandate'), findsOneWidget);
+
+        // Tap Transmit & Cancel Mandate
+        await tester.tap(find.text('Transmit & Cancel Mandate'));
+        await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
       },

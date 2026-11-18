@@ -115,6 +115,25 @@ class AppDatabase {
         lastRoundupTimestamp INTEGER NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY,
+        merchantName TEXT NOT NULL,
+        category TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT NOT NULL,
+        billingCycle TEXT NOT NULL,
+        status TEXT NOT NULL,
+        paymentMethod TEXT NOT NULL,
+        nextBillingDate INTEGER NOT NULL,
+        detectedFrequencyDays INTEGER NOT NULL,
+        vendorEmail TEXT NOT NULL,
+        accountReference TEXT NOT NULL,
+        cancellationNotice TEXT,
+        cancellationReason TEXT
+      )
+    ''');
   }
 
   static Future<void> seedInitialData(Database db) async {
@@ -448,6 +467,25 @@ class AppDatabase {
       )
     ''');
 
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY,
+        merchantName TEXT NOT NULL,
+        category TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT NOT NULL,
+        billingCycle TEXT NOT NULL,
+        status TEXT NOT NULL,
+        paymentMethod TEXT NOT NULL,
+        nextBillingDate INTEGER NOT NULL,
+        detectedFrequencyDays INTEGER NOT NULL,
+        vendorEmail TEXT NOT NULL,
+        accountReference TEXT NOT NULL,
+        cancellationNotice TEXT,
+        cancellationReason TEXT
+      )
+    ''');
+
     final existing = await db.query(
       'savings_vaults',
       where: 'id = ?',
@@ -469,6 +507,116 @@ class AppDatabase {
         'lastRoundupTimestamp': DateTime.now().millisecondsSinceEpoch,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
+
+    // 6. Subscriptions
+    final initialSubscriptions = [
+      {
+        'id': 'sub_aws',
+        'merchantName': 'Amazon Web Services',
+        'category': 'Cloud Infrastructure',
+        'amount': 428.50,
+        'currency': 'USD',
+        'billingCycle': 'monthly',
+        'status': 'active',
+        'paymentMethod': 'Executive Titanium Vault (••8812)',
+        'nextBillingDate': DateTime.now()
+            .add(const Duration(days: 14))
+            .millisecondsSinceEpoch,
+        'detectedFrequencyDays': 30,
+        'vendorEmail': 'billing@aws.amazon.com',
+        'accountReference': 'PV-AWS-9021',
+        'cancellationNotice': null,
+        'cancellationReason': null,
+      },
+      {
+        'id': 'sub_bloomberg',
+        'merchantName': 'Bloomberg Professional',
+        'category': 'Financial Intelligence',
+        'amount': 2400.00,
+        'currency': 'USD',
+        'billingCycle': 'monthly',
+        'status': 'active',
+        'paymentMethod': 'Executive Titanium Vault (••8812)',
+        'nextBillingDate': DateTime.now()
+            .add(const Duration(days: 8))
+            .millisecondsSinceEpoch,
+        'detectedFrequencyDays': 30,
+        'vendorEmail': 'billing@bloomberg.com',
+        'accountReference': 'PV-BLM-1102',
+        'cancellationNotice': null,
+        'cancellationReason': null,
+      },
+      {
+        'id': 'sub_github',
+        'merchantName': 'GitHub Enterprise',
+        'category': 'Developer Tools',
+        'amount': 21.00,
+        'currency': 'USD',
+        'billingCycle': 'monthly',
+        'status': 'active',
+        'paymentMethod': 'Cyber Cloud Ops (••1254)',
+        'nextBillingDate': DateTime.now()
+            .add(const Duration(days: 22))
+            .millisecondsSinceEpoch,
+        'detectedFrequencyDays': 30,
+        'vendorEmail': 'support@github.com',
+        'accountReference': 'PV-GH-4410',
+        'cancellationNotice': null,
+        'cancellationReason': null,
+      },
+      {
+        'id': 'sub_openai',
+        'merchantName': 'OpenAI ChatGPT Plus',
+        'category': 'AI Services',
+        'amount': 20.00,
+        'currency': 'USD',
+        'billingCycle': 'monthly',
+        'status': 'frozen',
+        'paymentMethod': 'Cyber Cloud Ops (••1254)',
+        'nextBillingDate': DateTime.now()
+            .add(const Duration(days: 25))
+            .millisecondsSinceEpoch,
+        'detectedFrequencyDays': 30,
+        'vendorEmail': 'ar@openai.com',
+        'accountReference': 'PV-OAI-3019',
+        'cancellationNotice': null,
+        'cancellationReason': null,
+      },
+      {
+        'id': 'sub_netflix',
+        'merchantName': 'Netflix Premium',
+        'category': 'Streaming Media',
+        'amount': 22.99,
+        'currency': 'USD',
+        'billingCycle': 'monthly',
+        'status': 'cancelled',
+        'paymentMethod': 'Executive Titanium Vault (••8812)',
+        'nextBillingDate': DateTime.now()
+            .add(const Duration(days: 5))
+            .millisecondsSinceEpoch,
+        'detectedFrequencyDays': 30,
+        'vendorEmail': 'support@netflix.com',
+        'accountReference': 'PV-NFLX-8841',
+        'cancellationNotice': 'Formally terminated via PayVault Autonomous FinTech Bot. Pre-authorized billing mandate revoked.',
+        'cancellationReason': 'Consolidation of entertainment accounts',
+      },
+    ];
+
+    for (final s in initialSubscriptions) {
+      final existingSub = await db.query(
+        'subscriptions',
+        where: 'id = ?',
+        whereArgs: [s['id']],
+        limit: 1,
+      );
+      if (existingSub.isEmpty) {
+        await db.insert(
+          'subscriptions',
+          s,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    }
   }
 
   static Future<void> resetDatabase() async {
@@ -479,6 +627,7 @@ class AppDatabase {
     await db.execute('DELETE FROM contacts');
     await db.execute('DELETE FROM ai_messages');
     await db.execute('DELETE FROM savings_vaults');
+    await db.execute('DELETE FROM subscriptions');
     await seedInitialData(db);
   }
 }

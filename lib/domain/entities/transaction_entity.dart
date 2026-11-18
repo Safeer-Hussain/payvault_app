@@ -26,6 +26,7 @@ class TransactionEntity {
   });
 
   bool get isCredit => type.toLowerCase() == 'credit';
+  bool get isDebit => type.toLowerCase() == 'debit';
 
   String get formattedDate {
     final dt = DateTime.fromMillisecondsSinceEpoch(timestamp);

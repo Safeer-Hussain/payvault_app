@@ -11,17 +11,20 @@ import '../../data/repositories/transfer_repository_impl.dart';
 import '../../data/repositories/ai_advisor_repository_impl.dart';
 import '../../data/repositories/savings_vault_repository_impl.dart';
 import '../../data/repositories/statement_repository_impl.dart';
+import '../../data/repositories/subscription_repository_impl.dart';
 import '../../domain/repositories/vault_repository.dart';
 import '../../domain/repositories/card_repository.dart';
 import '../../domain/repositories/transfer_repository.dart';
 import '../../domain/repositories/ai_advisor_repository.dart';
 import '../../domain/repositories/savings_vault_repository.dart';
 import '../../domain/repositories/statement_repository.dart';
+import '../../domain/repositories/subscription_repository.dart';
 import '../../presentation/vault/vault_controller.dart';
 import '../../presentation/cards/card_studio_controller.dart';
 import '../../presentation/transfers/transfer_controller.dart';
 import '../../presentation/ai_advisor/ai_advisor_controller.dart';
 import '../../presentation/analytics_ledger/ledger_controller.dart';
+import '../../presentation/analytics_ledger/subscription_controller.dart';
 import '../../presentation/settings_debug/debug_controller.dart';
 
 final GetIt getIt = GetIt.instance;
@@ -45,6 +48,7 @@ Future<void> configureDependencies() async {
   final aiRepo = AiAdvisorRepositoryImpl();
   final savingsVaultRepo = SavingsVaultRepositoryImpl();
   final statementRepo = StatementRepositoryImpl();
+  final subscriptionRepo = SubscriptionRepositoryImpl();
 
   getIt.registerSingleton<VaultRepository>(vaultRepo);
   getIt.registerSingleton<CardRepository>(cardRepo);
@@ -52,6 +56,7 @@ Future<void> configureDependencies() async {
   getIt.registerSingleton<AiAdvisorRepository>(aiRepo);
   getIt.registerSingleton<SavingsVaultRepository>(savingsVaultRepo);
   getIt.registerSingleton<StatementRepository>(statementRepo);
+  getIt.registerSingleton<SubscriptionRepository>(subscriptionRepo);
 
   // 4. Controllers
   final themeController = Get.put(ThemeController(prefs), permanent: true);
@@ -86,6 +91,12 @@ Future<void> configureDependencies() async {
     permanent: true,
   );
   getIt.registerSingleton<LedgerController>(ledgerController);
+
+  final subscriptionController = Get.put(
+    SubscriptionController(subscriptionRepo),
+    permanent: true,
+  );
+  getIt.registerSingleton<SubscriptionController>(subscriptionController);
 
   final debugController = Get.put(
     DebugController(prefs, vaultRepo),
