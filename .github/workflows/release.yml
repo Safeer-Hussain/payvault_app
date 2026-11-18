@@ -10,6 +10,8 @@ jobs:
     name: Build Release APK & Publish GitHub Release
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Source Repository
@@ -34,7 +36,7 @@ jobs:
         run: dart run tool/sprint_gate.dart
 
       - name: Build Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --pub --android-skip-build-dependency-validation
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
